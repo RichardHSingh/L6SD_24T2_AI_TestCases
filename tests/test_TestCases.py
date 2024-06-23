@@ -6,52 +6,36 @@
 # ===================== IMPORTNG LIBRARIES =====================
 import pytest
 import pandas as pd
-from preprocessing_data import cpd_preprocessing_input_data
-from preprocessing_data import cpd_preprocessing_output_data
+from preprocessing_data import cpd_preprocessing_data
 
 
 
 # ===================================================================================================================================================
-# ============================================================== TEST CASES 1 =======================================================================
+# ============================================================== TEST CASES 1 IRRELEVANT COLUMNS ====================================================
 # ===================================================================================================================================================
 
 # ===================== INPUT DATA =====================
 # Input data - Verifying the input data doesn't contain unnecessary columns
 
+
 def test_cpd_reprocess_input_columns():
-    # ======================================== SHOWCASING  DATASET COLUMNS ========================================
-    # all the coloumns in given dataset 
-    all_columns = ['Customer Name', 'Customer e-mail', 'Country', 'Gender', 'Age', 'Annual Salary', 'Credit Card Debt', 'Net Worth', 'Car Purchase Amount']
-    df_cpd = pd.DataFrame(columns = all_columns)
-    
-    # declaring the original dataset shape and the shape after it has been processed
-    original_dataset_shape = df_cpd.shape
-    processed_cpd_df, dropped_columns, used_columns = cpd_preprocessing_input_data(df_cpd)
-    
-    # declaration of the intended output column out of all columns - irrelevant
-    input_columns = ['Gender', 'Age', 'Annual Salary', 'Credit Card Debt', 'Net Worth']
-    
-    # Assert that used columns match the expected utilised columns
-    assert used_columns == input_columns, f"Expected used columns {input_columns}, but got {used_columns}."
-    
-    # Assert that no dropped column is in the used columns
-    for col in dropped_columns:
-        assert col not in used_columns, f"Column {col} should have been dropped but is still present in used columns."
+    # Read the CSV file into a DataFrame
+    df_cpd = pd.read_csv('Car_Purchasing_Data.csv')
 
+    # Call the preprocessing function
+    X_scaled, _, _, _ = cpd_preprocessing_data(df_cpd)
 
-    # ======================================== SHOWCASING DATASET SHAPE ========================================
-    # Assert that the shape of the data is correct
-    input_expected_dataset_shape = (original_dataset_shape[0], len(used_columns))
-    print("\n\n")
-    print(f"+++ PROCESSING INPUT DATASET SHAPE +++")
-    print(f"The original dataset shape is --> {original_dataset_shape}")
-    print(f"The dataset after being process is --> {processed_cpd_df.shape}")
-    print(f"The dataset expected is --> {input_expected_dataset_shape}")
-
-
-# ======================================== OUTPUT IN TERMINAL IF ERRORS ========================================    
-    assert processed_cpd_df.shape == input_expected_dataset_shape, f"Expected shape is meant to be {input_expected_dataset_shape}, but instead got {processed_cpd_df.shape}."
-   
+    # Define the input columns that should remain after preprocessing
+    excepted_columns = ['Gender', 'Age', 'Annual Salary', 'Credit Card Debt', 'Net Worth']
+    
+    # Convert the scaled features back to a DataFrame for testing
+    X_df_cpd = pd.DataFrame(X_scaled, columns = excepted_columns)
+    
+    # Check if X_df is a DataFrame
+    assert isinstance(X_df_cpd, pd.DataFrame)
+    
+    for col in ['Customer Name', 'Customer e-mail', 'Country', 'Car Purchase Amount']:
+        assert col not in X_df_cpd.columns, f"Column '{col}' should have been dropped but unfortunately it still exist."
 
 if __name__ == "__main__":
     pytest.main()
@@ -61,7 +45,7 @@ if __name__ == "__main__":
 
 
 # ===================================================================================================================================================
-# ============================================================== TEST CASES 2 =======================================================================
+# ============================================================== TEST CASES 2 OUTPUT COLUMNS ========================================================
 # ===================================================================================================================================================
 
 
@@ -69,41 +53,60 @@ if __name__ == "__main__":
 # Output data - Verifying the output data doesn't contain unnecessary columns
 
 def test_cpd_reprocess_output_columns():
-    # ======================================== SHOWCASING  DATASET COLUMNS ========================================
-    # dataset columns before processing | dropped 
-    all_columns = ['Customer Name', 'Customer e-mail', 'Country', 'Gender', 'Age', 'Annual Salary', 'Credit Card Debt', 'Net Worth', 'Car Purchase Amount']
-    df_cpd = pd.DataFrame(columns = all_columns)
-    
-    # stating the original dataset column and after it has been processed
-    original_dataset_shape = df_cpd.shape
-    processed_cpd_df, dropped_columns, used_columns = cpd_preprocessing_output_data(df_cpd)
-    
-    # intended output column
-    output_columns = ['Car Purchase Amount']
-    
-    # Assert that used columns match the expected utilised columns
-    assert used_columns == output_columns, f"Expected used columns {output_columns}, but got {used_columns}."
-    
-    # Assert that no dropped column is in the used columns
-    for col in dropped_columns:
-        assert col not in used_columns, f"Column {col} should have been dropped but is still present in used columns."
+    df_cpd = pd.read_csv('Car_Purchasing_Data.csv')
 
-# ======================================== SHOWCASING DATASET SHAPE ========================================
-    # Assert that the shape of the data is correct
-    output_expected_dataset_shape = (original_dataset_shape[0], len(used_columns))
-    print("\n\n")
-    print(f"+++ PROCESSING OUTPUT DATASET SHAPE +++")
-    print(f"The original dataset shape is --> {original_dataset_shape}")
-    print(f"The dataset after being process is --> {processed_cpd_df.shape}")
-    print(f"The dataset expected is --> {output_expected_dataset_shape}")
+    # Call the preprocessing function
+    _, Y_scaled, _, _ = cpd_preprocessing_data(df_cpd)
+
+    # defining the appropriate column for output
+    output_column = 'Car Purchase Amount'
+
+    # sclaing to convert to dataframe for testing
+    Y_df_cpd = pd.DataFrame(Y_scaled, columns = [output_column])
+      
+
+    # Check if Y_df_cpd is a DataFrame
+    assert isinstance(Y_df_cpd, pd.DataFrame)
+    
+    assert output_column in Y_df_cpd.columns
 
 
-# ======================================== OUTPUT IN TERMINAL IF ERRORS ========================================    
-    assert processed_cpd_df.shape == output_expected_dataset_shape, f"Expected shape is meant to be {output_expected_dataset_shape}, but instead got {processed_cpd_df.shape}."
-   
 if __name__ == "__main__":
     pytest.main()
 
 
+
+
+
+# ===================================================================================================================================================
+# ============================================================== TEST CASES 3 SHAPING ===============================================================
+# ===================================================================================================================================================
+def test_dataset_shape():
+    df_cpd = pd.read_csv('Car_Purchasing_Data.csv')
+
+    # Call the preprocessing function
+    X_scaled, Y_scaled, _, _ = cpd_preprocessing_data(df_cpd)
+
+    # exeptected columns --> 1 = column and 0 = rows
+    assert X_scaled.shape[1] == 5, "Expecting 5 columns in the dataset after the preprocessing"
+    assert Y_scaled.shape[1] == 1, "Expecting 1 column as the output in the dataset after the preprocessing"
+
+    expected_rows = df_cpd.shape[0]
+    assert X_scaled.shape[0] == expected_rows, "Expecting 500 rows in the dataset after the preprocessing"
+    assert Y_scaled.shape[0] == expected_rows, "Expecting 500 rows as the output in the dataset after the preprocessing"
+
+
+if __name__ == "__main__":
+    pytest.main()
+
+
+
+
+
+# ===================================================================================================================================================
+# ============================================================== TEST SCRIPT IN TERMINAL ============================================================
+# ===================================================================================================================================================
 # terminal syntax for running code
 # pytest -s
+
+
